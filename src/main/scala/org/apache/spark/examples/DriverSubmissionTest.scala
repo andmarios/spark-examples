@@ -17,22 +17,30 @@
 
 package org.apache.spark.examples
 
-import org.apache.spark.SparkContext
+import scala.collection.JavaConversions._
 
-object ExceptionHandlingTest {
+/** Prints out environmental information, sleeps, and then exits. Made to
+  * test driver submission in the standalone scheduler. */
+object DriverSubmissionTest {
   def main(args: Array[String]) {
-    if (args.length == 0) {
-      System.err.println("Usage: ExceptionHandlingTest <master>")
-      System.exit(1)
+    if (args.size < 1) {
+      println("Usage: DriverSubmissionTest <seconds-to-sleep>")
+      System.exit(0)
     }
+    val numSecondsToSleep = args(0).toInt
 
-    val sc = new SparkContext(args(0), "ExceptionHandlingTest",
-      System.getenv("SPARK_HOME"), SparkContext.jarOfClass(this.getClass))
-    sc.parallelize(0 until sc.defaultParallelism).foreach { i =>
-      if (math.random > 0.75)
-        throw new Exception("Testing exception handling")
+    val env = System.getenv()
+    val properties = System.getProperties()
+
+    println("Environment variables containing SPARK_TEST:")
+    env.filter{case (k, v) => k.contains("SPARK_TEST")}.foreach(println)
+
+    println("System properties containing spark.test:")
+    properties.filter{case (k, v) => k.toString.contains("spark.test")}.foreach(println)
+
+    for (i <- 1 until numSecondsToSleep) {
+      println(s"Alive for $i out of $numSecondsToSleep seconds")
+      Thread.sleep(1000)
     }
-
-    System.exit(0)
   }
 }
